@@ -1,0 +1,50 @@
+version: "3.2"
+
+services:
+  server:
+    image: nginx:alpine
+    container_name: symfony-nginx
+    working_dir: /var/www/html
+    volumes:
+      - ./app:/var/www/html
+      - ./Docker/nginx/nginx.conf:/etc/nginx/conf.d/app.conf
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - internal
+
+  php:
+    build:
+      context: Docker/php
+    container_name: symfony-php
+    environment:
+      PHP_IDE_CONFIG: "serverName=Docker"
+    volumes:
+      - ./app:/var/www/html
+      - ./Docker/php/config:/usr/local/etc/php/custom.d
+    working_dir: /var/www/html
+    networks:
+      - internal
+
+  database:
+    image: postgres:13.3
+    container_name: symfony-postgres
+    environment:
+      POSTGRES_DB: "symfony_db"
+      POSTGRES_USER: "symfony_user"
+      POSTGRES_PASSWORD: "symfony_user"
+    volumes:
+      - ./postgresql:/var/lib/postgresql/data/
+    ports:
+      - "5433:5432"
+    networks:
+      - internal
+
+networks:
+  internal:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.224.5/28
